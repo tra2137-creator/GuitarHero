@@ -10,6 +10,12 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Guitar Hero")
 clock = pygame.time.Clock()
 
+# --- Initialize mixer for music ---
+pygame.mixer.init()
+pygame.mixer.music.load("assets/sounds/Survivor - Eye Of The Tiger (Lyrics).mp3")
+pygame.mixer.music.set_volume(0.7)  # adjust volume 0.0 - 1.0
+
+
 # --- Fonts ---
 font = pygame.font.SysFont("Consolas", 28)
 big_font = pygame.font.SysFont("Consolas", 50, bold=True)
@@ -27,6 +33,41 @@ note_chart = [
     {"time": 3.0, "key": "P"},
     {"time": 3.5, "key": "R"},
     {"time": 4.0, "key": "G"},
+    {"time": 4.5, "key": "B"},
+    {"time": 5.0, "key": "Y"},
+    {"time": 5.5, "key": "P"},
+    {"time": 6.0, "key": "R"},
+    {"time": 6.3, "key": "G"},
+    {"time": 6.6, "key": "B"},
+    {"time": 7.0, "key": "Y"},
+    {"time": 7.3, "key": "P"},
+    {"time": 7.6, "key": "R"},
+    {"time": 8.0, "key": "G"},
+    {"time": 8.4, "key": "B"},
+    {"time": 8.8, "key": "Y"},
+    {"time": 9.2, "key": "P"},
+    {"time": 9.6, "key": "R"},
+    {"time": 10.0, "key": "G"},
+    {"time": 10.5, "key": "B"},
+    {"time": 11.0, "key": "Y"},
+    {"time": 11.5, "key": "P"},
+    {"time": 12.0, "key": "R"},
+    {"time": 12.5, "key": "G"},
+    {"time": 13.0, "key": "B"},
+    {"time": 13.5, "key": "Y"},
+    {"time": 14.0, "key": "P"},
+    {"time": 14.5, "key": "R"},
+    {"time": 15.0, "key": "G"},
+    {"time": 15.5, "key": "B"},
+    {"time": 16.0, "key": "Y"},
+    {"time": 16.5, "key": "P"},
+    {"time": 17.0, "key": "R"},
+    {"time": 17.5, "key": "G"},
+    {"time": 18.0, "key": "B"},
+    {"time": 18.5, "key": "Y"},
+    {"time": 19.0, "key": "P"},
+    {"time": 19.5, "key": "R"},
+    {"time": 20.0, "key": "G"},
 ]
 game.load_notes(note_chart)
 
@@ -90,15 +131,19 @@ running = True
 while running:
     delta_time = clock.tick(FPS) / 1.0
 
+    # --- Event handling ---
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
         elif event.type == pygame.KEYDOWN:
+            # Start screen
             if game_state == STATE_START and event.key == pygame.K_RETURN:
                 game.start()
                 game_state = STATE_PLAYING
+                pygame.mixer.music.play()
 
+            # Playing screen
             elif game_state == STATE_PLAYING:
                 if event.key == pygame.K_p:
                     game.toggle_pause()
@@ -109,37 +154,39 @@ while running:
                         feedback_timer = 0.5
                         feedback_y_offset = 0
 
+            # Game over screen
             elif game_state == STATE_GAME_OVER and event.key == pygame.K_RETURN:
+                pygame.mixer.music.stop()
                 game.restart()
-                game_state = STATE_START
                 hit_feedback = ""
                 feedback_timer = 0
                 feedback_y_offset = 0
-
-    # --- State screens ---
-    if game_state == STATE_START:
-        draw_start_screen()
-        continue
-    elif game_state == STATE_GAME_OVER:
-        draw_end_screen()
-        continue
+                game_state = STATE_PLAYING
+                pygame.mixer.music.play()
 
     # --- Update game ---
-    game.update()
-    if all(note.hit for note in game.notes):
-        game_state = STATE_GAME_OVER
+    if game_state == STATE_PLAYING:
+        game.update()
+        # End the song if all notes are hit
+        if all(note.hit for note in game.notes):
+            game_state = STATE_GAME_OVER
+            pygame.mixer.music.stop()
 
-    # --- Draw game ---
+    # --- Draw ---
     screen.fill((20, 20, 20))
-    draw_hit_zone()
-    game.draw(screen)
-    draw_feedback()
-
-    # --- Scoreboard ---
-    score_text = font.render(f"Score: {game.score}", True, WHITE)
-    combo_text = font.render(f"Combo: {game.combo}", True, WHITE)
-    screen.blit(score_text, (10, 10))
-    screen.blit(combo_text, (10, 50))
+    if game_state == STATE_START:
+        draw_start_screen()
+    elif game_state == STATE_PLAYING:
+        draw_hit_zone()
+        game.draw(screen)
+        draw_feedback()
+        # Scoreboard
+        score_text = font.render(f"Score: {game.score}", True, WHITE)
+        combo_text = font.render(f"Combo: {game.combo}", True, WHITE)
+        screen.blit(score_text, (10, 10))
+        screen.blit(combo_text, (10, 50))
+    elif game_state == STATE_GAME_OVER:
+        draw_end_screen()
 
     pygame.display.flip()
 
