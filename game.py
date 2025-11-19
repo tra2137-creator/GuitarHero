@@ -26,10 +26,10 @@ class Note:
     def __init__(self, lane_index, spawn_time, hold_duration=0):
         self.lane_index = lane_index
         self.spawn_time = spawn_time
-        self.hold_duration = hold_duration  # seconds, 0 = normal note
-        self.y = -NOTE_RADIUS*2
+        self.hold_duration = hold_duration  # seconds (0 = normal note)
+        self.y = -NOTE_RADIUS * 2
         self.hit = False
-        self.holding = False  # True if currently being held
+        self.holding = False
 
     def update(self, delta_time):
         self.y += NOTE_SPEED * delta_time
@@ -38,12 +38,36 @@ class Note:
         color = LANE_COLORS[self.lane_index]
         x = LANE_X[self.lane_index]
 
-        # Draw hold line if hold_duration > 0
+        # HOLD NOTES (sustain)
         if self.hold_duration > 0:
-            end_y = min(HIT_Y, self.y + self.hold_duration * NOTE_SPEED)
-            pygame.draw.line(screen, color, (x, self.y), (x, end_y), 6)
+            hold_pixels = self.hold_duration * NOTE_SPEED
+            
+            # sustain runs BELOW the head, not above
+            start_y = self.y
+            end_y = self.y + hold_pixels
 
-        # Draw the circle
+            # Draw the sustain line ONLY in visible area
+            visible_start = max(start_y, 0)
+            visible_end   = min(end_y, SCREEN_HEIGHT)
+
+            if visible_end > visible_start:
+                pygame.draw.line(
+                    screen,
+                    color,
+                    (x, visible_start),
+                    (x, visible_end),
+                    6
+                )
+
+            # draw a tail bubble
+            pygame.draw.circle(
+                screen,
+                color,
+                (x, int(end_y)),
+                int(NOTE_RADIUS * 0.7)
+            )
+
+        # NOTE HEAD (always drawn)
         pygame.draw.circle(screen, color, (x, int(self.y)), NOTE_RADIUS)
 
 class Game:

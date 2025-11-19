@@ -3,6 +3,12 @@ import sys
 import time
 from constants import *
 from game import Game
+beat_recording = False
+beat_times = []
+
+song_start_time = None
+SONG_LENGTH = 4 * 60 + 2   # 4:02
+
 
 # --- Pygame setup ---
 pygame.init()
@@ -26,49 +32,99 @@ game = Game()
 
 # --- Notes chart example ---
 note_chart = [
-    {"time": 1.0, "key": "R"},
-    {"time": 1.5, "key": "G"},
-    {"time": 2.0, "key": "B"},
-    {"time": 2.5, "key": "Y"},
-    {"time": 3.0, "key": "P"},
-    {"time": 3.5, "key": "R"},
-    {"time": 4.0, "key": "G"},
-    {"time": 4.5, "key": "B"},
-    {"time": 5.0, "key": "Y"},
-    {"time": 5.5, "key": "P"},
-    {"time": 6.0, "key": "R"},
-    {"time": 6.3, "key": "G"},
-    {"time": 6.6, "key": "B"},
-    {"time": 7.0, "key": "Y"},
-    {"time": 7.3, "key": "P"},
-    {"time": 7.6, "key": "R"},
-    {"time": 8.0, "key": "G"},
-    {"time": 8.4, "key": "B"},
-    {"time": 8.8, "key": "Y"},
-    {"time": 9.2, "key": "P"},
-    {"time": 9.6, "key": "R"},
-    {"time": 10.0, "key": "G"},
-    {"time": 10.5, "key": "B"},
-    {"time": 11.0, "key": "Y"},
-    {"time": 11.5, "key": "P"},
-    {"time": 12.0, "key": "R"},
-    {"time": 12.5, "key": "G"},
-    {"time": 13.0, "key": "B"},
-    {"time": 13.5, "key": "Y"},
-    {"time": 14.0, "key": "P"},
-    {"time": 14.5, "key": "R"},
-    {"time": 15.0, "key": "G"},
-    {"time": 15.5, "key": "B"},
-    {"time": 16.0, "key": "Y"},
-    {"time": 16.5, "key": "P"},
-    {"time": 17.0, "key": "R"},
-    {"time": 17.5, "key": "G"},
-    {"time": 18.0, "key": "B"},
-    {"time": 18.5, "key": "Y"},
-    {"time": 19.0, "key": "P"},
-    {"time": 19.5, "key": "R"},
-    {"time": 20.0, "key": "G"},
+    # --- INTRO HEARTBEAT (8 beats) ---
+    {"time": 1.515, "key": "R"},
+    {"time": 2.062, "key": "R"},
+    {"time": 2.666, "key": "R"},
+    {"time": 3.176, "key": "R"},
+    {"time": 3.715, "key": "R"},
+    {"time": 4.259, "key": "R"},
+    {"time": 4.784, "key": "R"},
+    {"time": 5.361, "key": "R"},
+    {"time": 5.884, "key": "R"},
+    {"time": 6.423, "key": "R"},
+    {"time": 6.997, "key": "R"},
+    {"time": 7.503, "key": "R"},
+    {"time": 8.029, "key": "R"},
+    {"time": 8.029, "key": "B"},
+    {"time": 8.029, "key": "P", "hold_duration": 1.0}, 
+
+    {"time": 9.246, "key": "R"},
+    {"time": 9.246, "key": "B"},
+    {"time": 9.246, "key": "P"},
+
+    {"time": 9.607, "key": "G"},
+    {"time": 9.607, "key": "Y"},
+
+    {"time": 9.992, "key": "R"},
+    {"time": 9.992, "key": "B"},
+    {"time": 9.992, "key": "P"},
+
+    {"time": 11.236, "key": "R"},
+    {"time": 11.236, "key": "P"},
+
+    {"time": 11.708, "key": "G"}, #down
+    {"time": 11.708, "key": "Y"},
+
+    {"time": 12.166, "key": "R"},#UP
+    {"time": 12.166, "key": "B"},
+    {"time": 12.166, "key": "P"},
+
+    {"time": 13.530, "key": "R"}, #up
+    {"time": 13.530, "key": "B"},
+    {"time": 13.530, "key": "P"},
+
+    {"time": 13.970, "key": "G"}, #down
+    {"time": 13.970, "key": "Y"},
+
+    {"time": 14.409, "key": "B"}, #double down
+    {"time": 14.409, "key": "Y"},
+    {"time": 14.409, "key": "P"},
+
+    {"time": 17.075, "key": "R"}, #up
+    {"time": 17.075, "key": "B"},
+    {"time": 17.075, "key": "P"},
+
+    {"time": 18.014, "key": "R"}, #up
+    {"time": 18.014, "key": "B"},
+    {"time": 18.014, "key": "P"},
+
+    {"time": 18.432, "key": "G"}, #down
+    {"time": 18.432, "key": "Y"},
+
+    {"time": 18.818, "key": "R"}, #up
+    {"time": 18.818, "key": "B"},
+    {"time": 18.818, "key": "P"},
+
+    {"time": 20.306, "key": "R"}, #up
+    {"time": 20.306, "key": "B"},
+    {"time": 20.306, "key": "P"},
+
+    {"time": 20.844, "key": "G"}, #down
+    {"time": 20.844, "key": "Y"},
+
+    {"time": 21.267, "key": "R"}, #up
+    {"time": 21.267, "key": "B"},
+    {"time": 21.267, "key": "P"},
+
+    {"time": 22.589, "key": "R"}, #up
+    {"time": 22.589, "key": "B"},
+    {"time": 22.589, "key": "P"},
+
+    {"time": 22.840, "key": "G"}, #down
+    {"time": 22.840, "key": "Y"},
+
+    {"time": 23.248, "key": "B"}, #double down
+    {"time": 23.248, "key": "Y"},
+    {"time": 23.248, "key": "P"},
+
+    {"time": 25.855, "key": "P"}, 
+    {"time": 26.270, "key": "Y"},
+    {"time": 26.840, "key": "P"}, 
+    {"time": 27.396, "key": "Y"}, 
+    {"time": 27.517, "key": "P"},
 ]
+
 game.load_notes(note_chart)
 
 # --- Game states ---
@@ -141,11 +197,47 @@ while running:
             if game_state == STATE_START and event.key == pygame.K_RETURN:
                 game.start()
                 game_state = STATE_PLAYING
+
                 pygame.mixer.music.play()
+                song_start_time = time.time()  # start timer
+
+                beat_recording = True
+                beat_times = []
+                print("\nBeat Recording Started!\nPress SPACE on every note.\n")
 
             # Playing screen
             elif game_state == STATE_PLAYING:
-                if event.key == pygame.K_p:
+
+                # === Adjustable fall time ===
+                FALL_TIME = 1.8  # seconds for note to fall
+
+                # --- Toggle beat recorder ---
+                if event.key == pygame.K_b:
+                    beat_recording = not beat_recording
+                    print("\nBeat Recording:", "ON" if beat_recording else "OFF", "\n")
+
+                # --- Record taps (AUTO-ADJUSTED!) ---
+                elif event.key == pygame.K_SPACE and beat_recording:
+                    raw_time = time.time() - song_start_time
+                    adjusted = raw_time - FALL_TIME
+
+                    if adjusted < 0:
+                        adjusted = 0.0
+
+                    beat_times.append(adjusted)
+                    print(f"Recorded: {adjusted:.3f}")
+
+                # --- End recording + print chart ---
+                elif event.key == pygame.K_s and beat_recording:
+                    print("\n=== FINAL NOTE CHART ===")
+                    for t in beat_times:
+                        print(f'{{"time": {t:.3f}, "key": "R"}},')
+                    print("=========================\n")
+
+                    beat_recording = False
+
+                # --- Actual note-hit code ---
+                elif event.key == pygame.K_p:
                     game.toggle_pause()
                 else:
                     result = game.handle_input(event.unicode)
@@ -153,6 +245,9 @@ while running:
                         hit_feedback = result
                         feedback_timer = 0.5
                         feedback_y_offset = 0
+
+
+
 
             # Game over screen
             elif game_state == STATE_GAME_OVER and event.key == pygame.K_RETURN:
@@ -167,10 +262,17 @@ while running:
     # --- Update game ---
     if game_state == STATE_PLAYING:
         game.update()
-        # End the song if all notes are hit
-        if all(note.hit for note in game.notes):
-            game_state = STATE_GAME_OVER
+    # end when real song time hits 4:02
+    if game_state == STATE_PLAYING and song_start_time is not None:
+        if time.time() - song_start_time >= SONG_LENGTH:
             pygame.mixer.music.stop()
+            game_state = STATE_GAME_OVER
+
+
+        # End the song if all notes are hit
+       # if all(note.hit for note in game.notes):
+       #     game_state = STATE_GAME_OVER
+        #    pygame.mixer.music.stop()
 
     # --- Draw ---
     screen.fill((20, 20, 20))
