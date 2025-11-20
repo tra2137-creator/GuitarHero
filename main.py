@@ -14,10 +14,13 @@ SONG_LENGTH = 4 * 60 + 2   # 4:02
 
 
 arduino_input = None
+current_fret = None
+strum_triggered = False
+
 
 def read_arduino():
     global arduino_input
-    ser = serial.Serial("/dev/tty.usbmodem*", 9600)  # macOS auto-detect
+    ser = serial.Serial("/dev/tty.usbmodem*", 9600)  # macOS auto-detect RMR PUT OWN
     while True:
         try:
             line = ser.readline().decode().strip()
@@ -481,56 +484,84 @@ while running:
                 beat_times = []
                 print("\nBeat Recording Started!\nPress SPACE on every note.\n")
 
-            # Playing screen
             elif game_state == STATE_PLAYING:
 
-                # === Adjustable fall time ===
-                FALL_TIME = 1.8  # seconds for note to fall
+                FALL_TIME = 1.8
 
-                # --- Toggle beat recorder ---
-                if event.key == pygame.K_b:
-                    beat_recording = not beat_recording
-                    print("\nBeat Recording:", "ON" if beat_recording else "OFF", "\n")
-                
-                # --- ARDUINO INPUT ---
+                # ==================================================
+                # 1. ARDUINO INPUT
+                # ==================================================
                 if arduino_input:
-                    result = game.handle_input(arduino_input)
-                    arduino_input = None  # clear so it doesn’t double-trigger
+                    if arduino_input in ["R","G","B","Y","P"]:
+                        current_fret = arduino_input.lower()
+
+                    elif arduino_input in ["STRUM_UP","STRUM_DOWN"]:
+                        strum_triggered = True
+
+                    arduino_input = None  # clear after use
+
+
+                # ==================================================
+                # 2. KEYBOARD INPUT
+                # ==================================================
+                if event.type == pygame.KEYDOWN:
+
+                    # FRET KEYS
+                    if event.key == pygame.K_d:
+                        current_fret = "d"   # red
+                    elif event.key == pygame.K_f:
+                        current_fret = "f"   # green
+                    elif event.key == pygame.K_j:
+                        current_fret = "j"   # blue
+                    elif event.key == pygame.K_k:
+                        current_fret = "k"   # yellow
+                    elif event.key == pygame.K_l:
+                        current_fret = "l"   # purple
+
+
+                    # STRUM
+                    elif event.key == pygame.K_a:
+                        strum_triggered = True
+
+                    # Beat recorder toggle
+                    elif event.key == pygame.K_b:
+                        beat_recording = not beat_recording
+
+                    # Beat tap
+                    # --- 3. Beat Recording ---
+                    if event.key == pygame.K_SPACE and beat_recording:
+                        raw_time = time.time() - song_start_time
+                        adjusted = max(0.0, raw_time - FALL_TIME)
+                        beat_times.append(adjusted)
+                        print(f"Recorded: {adjusted:.3f}")
+                        continue
+
+
+
+                    # Stop beat recording
+                    elif event.key == pygame.K_s and beat_recording:
+                        print("\n=== FINAL NOTE CHART ===")
+                        for t in beat_times:
+                            print(f'{{"time": {t:.3f}, "key": "R"}},')
+                        print("=========================\n")
+                        beat_recording = False
+
+                    elif event.key == pygame.K_p:
+                        game.toggle_pause()
+
+
+                # ==================================================
+                # 3. UNIVERSAL HIT CHECK (WORKS FOR BOTH INPUTS)
+                # ==================================================
+                if strum_triggered and current_fret:
+                    result = game.handle_input(current_fret)
+                    strum_triggered = False  # reset after hit
+
                     if result:
                         hit_feedback = result
                         feedback_timer = 0.5
                         feedback_y_offset = 0
 
-
-                # --- Record taps (AUTO-ADJUSTED!) ---
-                elif event.key == pygame.K_SPACE and beat_recording:
-                    raw_time = time.time() - song_start_time
-                    adjusted = raw_time - FALL_TIME
-
-                    if adjusted < 0:
-                        adjusted = 0.0
-
-                    beat_times.append(adjusted)
-                    print(f"Recorded: {adjusted:.3f}")
-
-                # --- End recording + print chart ---
-                elif event.key == pygame.K_s and beat_recording:
-                    print("\n=== FINAL NOTE CHART ===")
-                    for t in beat_times:
-                        print(f'{{"time": {t:.3f}, "key": "R"}},')
-                    print("=========================\n")
-
-                    beat_recording = False
-
-                # --- Actual note-hit code ---
-                elif event.key == pygame.K_p:
-                    game.toggle_pause()
-                else:
-                    result = game.handle_input(event.unicode)
-                    if result:
-                        hit_feedback = result
-                        feedback_timer = 0.5
-                        feedback_y_offset = 0
 
 
 
