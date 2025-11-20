@@ -366,10 +366,6 @@ note_chart = [
     {"time": 137.527, "key": "G"},
     {"time": 138.216, "key": "R"},
     {"time": 140.394, "key": "P"},
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 
     {"time": 145.152, "key": "B"},
     {"time": 145.152, "key": "P"},
@@ -405,16 +401,6 @@ note_chart = [
 
 
     {"time": 167.174, "key": "P"}, # Eye of the tiger
-
-
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 ]
 
 game.load_notes(note_chart)
